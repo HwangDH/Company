@@ -60,7 +60,7 @@ public class Customer_Adapter extends BaseAdapter {
         return  convertView;
     }
 
-    public void addVO(String customer_name, int customer_age){
+    public void addVO(String customer_name, String customer_age){
         CustomerVO item = new CustomerVO();
 
         item.setCustomer_name(customer_name);

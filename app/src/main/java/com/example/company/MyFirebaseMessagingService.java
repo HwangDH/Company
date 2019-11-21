@@ -76,8 +76,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     public void onNewToken(String refreshedToken) {
         super.onNewToken(refreshedToken);
         Log.e(TAG, "Refreshed token: " + refreshedToken);
-        SharedPreferences.Editor editor = shared.edit();
-        editor.putString( "refreshedToken", refreshedToken );
         sendRegistrationToServer(refreshedToken);
     }
 
@@ -90,17 +88,13 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             //제목이 없는 payload이면       php에서 보낼때 이미 한번 점검했음.
             title = "공지사항"; //기본제목을 적어 주자.
         }
-
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "default");
-
         builder.setSmallIcon(R.mipmap.ic_launcher);
         builder.setContentTitle(title);
         builder.setContentText(body);
-
         builder.setColor( Color.RED);
         // 사용자가 탭을 클릭하면 자동 제거
         builder.setAutoCancel(true);
-
         // 알림 표시
         NotificationManager notificationManager = (NotificationManager) this.getSystemService( Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

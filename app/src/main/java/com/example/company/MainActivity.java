@@ -11,7 +11,7 @@ public class MainActivity extends AppCompatActivity {
     private ListView listview;
     private Customer_Adapter adapter;
     private String[] customer_name = {"황동현", "홍길동"};
-    private int[] customer_age = {12,25};
+    private String[] customer_age = {"12","25"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
