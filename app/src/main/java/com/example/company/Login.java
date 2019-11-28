@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -40,7 +41,7 @@ public class Login extends Activity {
     String user_id, user_password;
     String token;
     SharedPreferences shared;
-
+    SharedPreferences.Editor editor;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,6 +54,17 @@ public class Login extends Activity {
         id_store = (CheckBox)findViewById(R.id.id_store);
         auto_login = (CheckBox)findViewById(R.id.auto_login);
 
+        if(shared.getBoolean("Auto_Login_enabled", false)){
+            userid.setText(shared.getString("ID", ""));
+            userpasswod.setText(shared.getString("PW", ""));
+            auto_login.setChecked(true);
+        }
+
+        if(shared.getBoolean("Auto_Login_enabled2", false)){
+            userid.setText(shared.getString("ID",""));
+            id_store.setChecked(true);
+        }
+
         FirebaseInstanceId.getInstance().getInstanceId()
                 .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
                     @Override
@@ -63,42 +75,38 @@ public class Login extends Activity {
                         }
                         // Get new Instance ID token
                         token = task.getResult().getToken();
-                        Toast.makeText(Login.this, token, Toast.LENGTH_SHORT).show();
-                        System.out.println(token);
                     }
                 });
 
-
-        if(((CheckBox)auto_login).isChecked()){
-            String userid2 = shared.getString("userid", "");
-            String userpassword2 = shared.getString("userpassword", "");
-            login(userid2, userpassword2);
-        }
-
-        id_store.setOnClickListener(new View.OnClickListener() {
+        auto_login.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onClick(View v) {
-                if(((CheckBox)v).isChecked()){
-                    user_id = userid.getText().toString();
-                    SharedPreferences.Editor editor = shared.edit();
-                    editor.clear();
-                    editor.putString("userid", user_id);
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                editor = shared.edit();
+                if(isChecked){
+                    String id = userid.getText().toString();
+                    String pw = userpasswod.getText().toString();
+                    editor.putString("ID", id);
+                    editor.putString("PW", pw);
+                    editor.putBoolean("Auto_Login_enabled", true);
+                    editor.commit();
+                }else{
+                    editor.remove("Auto_Login_enabled");
                     editor.commit();
                 }
             }
         });
 
-        auto_login.setOnClickListener(new View.OnClickListener() {
+        id_store.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onClick(View v) {
-                if(((CheckBox)v).isChecked()){
-                    user_id = userid.getText().toString();
-                    user_password = userpasswod.getText().toString();
-
-                    SharedPreferences.Editor editor = shared.edit();
-                    editor.clear();
-                    editor.putString("userid", user_id);
-                    editor.putString("userpassword", user_password);
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                editor = shared.edit();
+                if(isChecked){
+                    String id = userid.getText().toString();
+                    editor.putString("ID", id);
+                    editor.putBoolean("Auto_Login_enabled2", true);
+                    editor.commit();
+                }else{
+                    editor.remove("Auto_Login_enabled2");
                     editor.commit();
                 }
             }
