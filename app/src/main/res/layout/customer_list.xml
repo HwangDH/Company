@@ -11,15 +11,20 @@
         android:orientation="horizontal"
         android:layout_marginTop="5dp">
 
-        <ImageView
+        <TextView
             android:layout_width="75dp"
-            android:layout_height="match_parent">
-        </ImageView>
+            android:layout_height="match_parent"
+            android:text="이름"
+            android:textSize="20dp"
+            android:gravity="center">
+
+        </TextView>
 
         <TextView
-            android:id="@+id/customer_name"
+            android:id="@+id/bank"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:textSize="20dp">
 
         </TextView>
     </LinearLayout>
@@ -31,15 +36,45 @@
         android:orientation="horizontal"
         android:layout_marginTop="5dp">
 
-        <ImageView
+        <TextView
             android:layout_width="75dp"
-            android:layout_height="match_parent">
-        </ImageView>
+            android:layout_height="match_parent"
+            android:text="나이"
+            android:gravity="center"
+            android:textSize="20dp">
+        </TextView>
 
         <TextView
-            android:id="@+id/customer_age"
+            android:id="@+id/depositid"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:textSize="20dp">
+
+        </TextView>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/line3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="5dp">
+
+        <TextView
+            android:layout_width="75dp"
+            android:layout_height="match_parent"
+            android:text="성별"
+            android:gravity="center"
+            android:textSize="20dp">
+
+        </TextView>
+
+        <TextView
+            android:id="@+id/depositname"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="20dp">
 
         </TextView>
 

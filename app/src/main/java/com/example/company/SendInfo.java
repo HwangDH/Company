@@ -52,7 +52,8 @@ public class SendInfo extends Activity {
     private final int GET_GALLERY_IMAGE6 = 205;
 
     private ImageView img1, img2, img3, img4, img5, img6;
-    private File tempFile;
+
+    File tempFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,6 +95,8 @@ public class SendInfo extends Activity {
                 alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, "OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        System.out.println(tempFile);
+                        FileUploadUtils.goSend(tempFile);
                         Intent intent = new Intent(SendInfo.this, MainActivity.class);
                         startActivity(intent);
                     }
@@ -237,7 +240,7 @@ public class SendInfo extends Activity {
         if (requestCode == GET_GALLERY_IMAGE1 && resultCode == RESULT_OK && data != null && data.getData() != null) {
             Uri photoUri = data.getData();
             Cursor cursor = null;
-
+            System.out.println(photoUri);
             try {
                 String[] proj = {MediaStore.Images.Media.DATA};
                 assert photoUri != null;
@@ -246,6 +249,7 @@ public class SendInfo extends Activity {
                 int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
                 cursor.moveToFirst();
                 tempFile = new File(cursor.getString(column_index));
+                System.out.println(tempFile);
             } finally {
                 if (cursor != null) {
                     cursor.close();

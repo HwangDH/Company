@@ -5,50 +5,46 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="#fbfcdb"
     tools:context=".SendInfo">
-    
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:background="#fed6e3">
 
         <TextView
-            android:id="@+id/item1"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="아이템1"
-            android:textSize="20dp">
+            android:text="보낼 정보 선택"
+            android:textSize="30dp"
+            android:textColor="#000000"
+            android:gravity="center">
 
         </TextView>
 
-        <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="1dp"
-            android:background="#4a5a71">
+    </LinearLayout>
 
-        </LinearLayout>
+    <LinearLayout
+        android:id="@+id/line1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp">
 
         <TextView
-            android:id="@+id/item2"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="아이템2"
-            android:textSize="20dp">
+            android:layout_width="75dp"
+            android:layout_height="match_parent"
+            android:text="목록1"
+            android:textSize="20dp"
+            android:gravity="center">
 
         </TextView>
 
-        <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="1dp"
-            android:background="#4a5a71">
-
-        </LinearLayout>
-
         <TextView
-            android:id="@+id/item3"
-            android:layout_width="fill_parent"
+            android:id="@+id/txt1"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="아이템3"
             android:textSize="20dp">
 
         </TextView>
@@ -58,7 +54,82 @@
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="1dp"
-        android:background="#4a5a71">
+        android:background="#4a5a71"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp">
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/line2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp">
+
+        <TextView
+            android:layout_width="75dp"
+            android:layout_height="match_parent"
+            android:text="목록2"
+            android:textSize="20dp"
+            android:gravity="center">
+
+        </TextView>
+
+        <TextView
+            android:id="@+id/txt2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="20dp">
+
+        </TextView>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="#4a5a71"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp">
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/line3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp">
+
+        <TextView
+            android:layout_width="75dp"
+            android:layout_height="match_parent"
+            android:text="목록3"
+            android:textSize="20dp"
+            android:gravity="center">
+
+        </TextView>
+
+        <TextView
+            android:id="@+id/txt3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="20dp">
+
+        </TextView>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="#4a5a71"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp">
 
     </LinearLayout>
 

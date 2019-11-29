@@ -9,7 +9,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 public class Single_Customer extends AppCompatActivity {
-    TextView txt1, txt2;
+    TextView txt1, txt2, txt3;
     Button send_single_info;
 
     @Override
@@ -19,12 +19,14 @@ public class Single_Customer extends AppCompatActivity {
 
         txt1 = (TextView)findViewById(R.id.txt1);
         txt2 = (TextView)findViewById(R.id.txt2);
+        txt3 = (TextView)findViewById(R.id.txt3);
         send_single_info = (Button)findViewById(R.id.send_info_check);
 
         Intent intent = getIntent();
 
-        txt1.setText(intent.getStringExtra("name"));
-        txt2.setText(intent.getStringExtra("age"));
+        txt1.setText(intent.getStringExtra("bankid"));
+        txt2.setText(intent.getStringExtra("productID"));
+        txt3.setText(intent.getStringExtra("productName"));
 
         send_single_info.setOnClickListener(new View.OnClickListener() {
             @Override
