@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
@@ -24,7 +25,17 @@ import android.widget.Toast;
 import androidx.core.app.ActivityCompat;
 
 
+import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -51,9 +62,14 @@ public class SendInfo extends Activity {
     private final int GET_GALLERY_IMAGE5 = 204;
     private final int GET_GALLERY_IMAGE6 = 205;
 
+    private String userChoosenTask;
+    Uri[] imageUri  = new Uri[6];
+    String [] imagePath = new String[6];
     private ImageView img1, img2, img3, img4, img5, img6;
-
-    File tempFile;
+    CognitoCachingCredentialsProvider credentialsProvider;
+    File [] f = new File [6];
+    AmazonS3 s3;
+    TransferUtility transferUtility;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +93,18 @@ public class SendInfo extends Activity {
             }
         }
 
+        CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                getApplicationContext(),
+                "ap-northeast-2:d99c73f5-b1fe-4ed7-a454-4f5b5446cf04", // 자격 증명 풀 ID
+                Regions.AP_NORTHEAST_2 // 리전
+        );
+
+        s3 = new AmazonS3Client(credentialsProvider);
+        s3.setRegion(Region.getRegion(Regions.AP_NORTHEAST_2));
+        s3.setEndpoint("s3.ap-northeast-2.amazonaws.com");
+
+        transferUtility = new TransferUtility(s3, getApplicationContext());
+
         btn1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -95,8 +123,13 @@ public class SendInfo extends Activity {
                 alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, "OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        System.out.println(tempFile);
-                        FileUploadUtils.goSend(tempFile);
+                        for(int i = 0; i<6; i++) {
+                            TransferObserver observer = transferUtility.upload(
+                                    "s3testdh",
+                                    f[i].getName(),
+                                    f[i]
+                            );
+                        }
                         Intent intent = new Intent(SendInfo.this, MainActivity.class);
                         startActivity(intent);
                     }
@@ -107,90 +140,70 @@ public class SendInfo extends Activity {
 
         img1.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                onCheck(GET_GALLERY_IMAGE1, PICK_FROM_CAMERA1);
+                selectImage(GET_GALLERY_IMAGE1);
+                //   onCheck(GET_GALLERY_IMAGE1, PICK_FROM_CAMERA1);
             }
         });
         img2.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                onCheck(GET_GALLERY_IMAGE2, PICK_FROM_CAMERA2);
+                selectImage(GET_GALLERY_IMAGE2);
+                //   onCheck(GET_GALLERY_IMAGE2, PICK_FROM_CAMERA2);
             }
         });
         img3.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                onCheck(GET_GALLERY_IMAGE3, PICK_FROM_CAMERA3);
+                selectImage(GET_GALLERY_IMAGE3);
+                //  onCheck(GET_GALLERY_IMAGE3, PICK_FROM_CAMERA3);
             }
         });
         img4.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                onCheck(GET_GALLERY_IMAGE4, PICK_FROM_CAMERA4);
+                selectImage(GET_GALLERY_IMAGE4);
+                // onCheck(GET_GALLERY_IMAGE4, PICK_FROM_CAMERA4);
             }
         });
         img5.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                onCheck(GET_GALLERY_IMAGE5, PICK_FROM_CAMERA5);
+                selectImage(GET_GALLERY_IMAGE5);
+                //  onCheck(GET_GALLERY_IMAGE5, PICK_FROM_CAMERA5);
             }
         });
         img6.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                onCheck(GET_GALLERY_IMAGE6, PICK_FROM_CAMERA6);
+                selectImage(GET_GALLERY_IMAGE6);
+                //   onCheck(GET_GALLERY_IMAGE6, PICK_FROM_CAMERA6);
             }
         });
     }
 
-    public void onCheck(final int gallery, final int camera) {
-        DialogInterface.OnClickListener cameraListener = new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                doTakePhotoAction(camera);
-            }
-        };
-        DialogInterface.OnClickListener albumListener = new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                doTakeAlbumAction(gallery);
-            }
-        };
-        DialogInterface.OnClickListener cancelListener = new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        };
+    private void selectImage(final int imgNum) {
+        Log.d(TAG, "select Image");
+        final CharSequence[] items = {"촬영하기", "사진 가져오기",
+                "취소"};
 
-        new AlertDialog.Builder(SendInfo.this)
-                .setTitle("이미지 불러오는 방법 선택")
-                .setPositiveButton("사진촬영", cameraListener)
-                .setNeutralButton("앨범선택", albumListener)
-                .setNegativeButton("취소", cancelListener)
-                .show();
-    }
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("사진가져오기");
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int item) {
+                // boolean result = Utility.checkPermission(getApplicationContext());
 
-    private void setImage(int number) {
-        if (number == GET_GALLERY_IMAGE1) {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            Bitmap originalBm = BitmapFactory.decodeFile(tempFile.getAbsolutePath(), options);
-            img1.setImageBitmap(originalBm);
-        } else if (number == GET_GALLERY_IMAGE2) {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            Bitmap originalBm = BitmapFactory.decodeFile(tempFile.getAbsolutePath(), options);
-            img2.setImageBitmap(originalBm);
-        } else if (number == GET_GALLERY_IMAGE3) {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            Bitmap originalBm = BitmapFactory.decodeFile(tempFile.getAbsolutePath(), options);
-            img3.setImageBitmap(originalBm);
-        } else if (number == GET_GALLERY_IMAGE4) {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            Bitmap originalBm = BitmapFactory.decodeFile(tempFile.getAbsolutePath(), options);
-            img4.setImageBitmap(originalBm);
-        } else if (number == GET_GALLERY_IMAGE5) {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            Bitmap originalBm = BitmapFactory.decodeFile(tempFile.getAbsolutePath(), options);
-            img5.setImageBitmap(originalBm);
-        } else if (number == GET_GALLERY_IMAGE6) {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            Bitmap originalBm = BitmapFactory.decodeFile(tempFile.getAbsolutePath(), options);
-            img6.setImageBitmap(originalBm);
-        }
+                if (items[item].equals("촬영하기")) {
+                    userChoosenTask = "촬영하기";
+                    //if (result)
+                    //cameraIntent();
+
+                } else if (items[item].equals("사진 가져오기")) {
+                    userChoosenTask = "사진 가져오기";
+                    //if (result)
+                    galleryIntent(imgNum);
+
+                } else if (items[item].equals("취소")) {
+                    dialog.dismiss();
+                }
+            }
+        });
+        builder.show();
     }
 
     private File createImageFile() throws IOException {
@@ -209,267 +222,195 @@ public class SendInfo extends Activity {
         return image;
     }
 
-    //카메라 불러오는 함수
-    public void doTakePhotoAction(int camera) {
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-
-        try {
-            tempFile = createImageFile();
-        } catch (IOException e) {
-            Toast.makeText(this, "이미지 처리 오류! 다시 시도해주세요.", Toast.LENGTH_SHORT).show();
-            finish();
-            e.printStackTrace();
-        }
-        if (tempFile != null) {
-            Uri photoUri = Uri.fromFile(tempFile);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
-            startActivityForResult(intent, camera);
-        }
-    }
-
-    //갤러리에서 이미지 가져오는 함수
-    public void doTakeAlbumAction(int gallery) {
+    private void galleryIntent(int imgNum) {
+        Log.d(TAG, "Gallery Intent");
         Intent intent = new Intent(Intent.ACTION_PICK);
         intent.setDataAndType(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
-        startActivityForResult(intent, gallery);
+        startActivityForResult(Intent.createChooser(intent, "Select File"), imgNum);
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == GET_GALLERY_IMAGE1 && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            Uri photoUri = data.getData();
-            Cursor cursor = null;
-            System.out.println(photoUri);
-            try {
-                String[] proj = {MediaStore.Images.Media.DATA};
-                assert photoUri != null;
-                cursor = getContentResolver().query(photoUri, proj, null, null, null);
-                assert cursor != null;
-                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-                cursor.moveToFirst();
-                tempFile = new File(cursor.getString(column_index));
-                System.out.println(tempFile);
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
+        if (resultCode == Activity.RESULT_OK) {
+            if (requestCode == GET_GALLERY_IMAGE1) {
+                Log.d(TAG, "onActivityResult, GET_GALLERY_IMAGE1");
+                Bitmap bm = null;
+                imageUri[0] = data.getData();
+                Log.d(TAG, Build.VERSION.SDK_INT + "");
+                imagePath[0] = getRealPathFromURI(imageUri[0]);
+                try {
+                    bm = getResizedBitmap(decodeUri(data.getData()), getResources().getDimensionPixelSize(R.dimen.idcard_pic_height), getResources().getDimensionPixelSize(R.dimen.idcard_pic_width));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
                 }
+                f[0] = new File(imagePath[0]);
+                System.out.println(imagePath[0]);
+                img1.setImageBitmap(bm);
+                //onSelectFromGalleryResult(data, GET_GALLERY_IMAGE1);
             }
-            setImage(requestCode);
-            img1.setImageURI(photoUri);
-        }
-        else if (requestCode == GET_GALLERY_IMAGE2 && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            Uri photoUri = data.getData();
-            Cursor cursor = null;
+            else if (requestCode == GET_GALLERY_IMAGE2){
+                Log.d(TAG, "onActivityResult, GET_GALLERY_IMAGE2");
+                Bitmap bm = null;
+                imageUri[1] = data.getData();
+                Log.d(TAG, Build.VERSION.SDK_INT + "");
+                imagePath[1] = getRealPathFromURI(imageUri[1]);
+                try {
+                    bm = getResizedBitmap(decodeUri(data.getData()), getResources().getDimensionPixelSize(R.dimen.idcard_pic_height), getResources().getDimensionPixelSize(R.dimen.idcard_pic_width));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                f[1] = new File(imagePath[1]);
+                img2.setImageBitmap(bm);
+                //onSelectFromGalleryResult(data, GET_GALLERY_IMAGE2);
+            }
+            else if(requestCode == GET_GALLERY_IMAGE3){
+                Log.d(TAG, "onActivityResult, GET_GALLERY_IMAGE3");
+                Bitmap bm = null;
+                imageUri[2] = data.getData();
+                Log.d(TAG, Build.VERSION.SDK_INT + "");
+                imagePath[2] = getRealPathFromURI(imageUri[2]);
+                try {
+                    bm = getResizedBitmap(decodeUri(data.getData()), getResources().getDimensionPixelSize(R.dimen.idcard_pic_height), getResources().getDimensionPixelSize(R.dimen.idcard_pic_width));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                f[2] = new File(imagePath[2]);
+                img3.setImageBitmap(bm);
+                //onSelectFromGalleryResult(data, GET_GALLERY_IMAGE3);
+            }
+            else if(requestCode == GET_GALLERY_IMAGE4){
+                Log.d(TAG, "onActivityResult, GET_GALLERY_IMAGE4");
+                Bitmap bm = null;
+                imageUri[3] = data.getData();
+                Log.d(TAG, Build.VERSION.SDK_INT + "");
+                imagePath[3] = getRealPathFromURI(imageUri[3]);
+                try {
+                    bm = getResizedBitmap(decodeUri(data.getData()), getResources().getDimensionPixelSize(R.dimen.idcard_pic_height), getResources().getDimensionPixelSize(R.dimen.idcard_pic_width));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                f[3] = new File(imagePath[3]);
+                img4.setImageBitmap(bm);
+                //onSelectFromGalleryResult(data, GET_GALLERY_IMAGE4);
+            }
+            else if(requestCode == GET_GALLERY_IMAGE5){
+                Log.d(TAG, "onActivityResult, GET_GALLERY_IMAGE5");
+                Bitmap bm = null;
+                imageUri[4] = data.getData();
+                Log.d(TAG, Build.VERSION.SDK_INT + "");
+                imagePath[4] = getRealPathFromURI(imageUri[4]);
+                try {
+                    bm = getResizedBitmap(decodeUri(data.getData()), getResources().getDimensionPixelSize(R.dimen.idcard_pic_height), getResources().getDimensionPixelSize(R.dimen.idcard_pic_width));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                f[4] = new File(imagePath[4]);
+                img5.setImageBitmap(bm);
+                //onSelectFromGalleryResult(data, GET_GALLERY_IMAGE5);
+            }
+            else if(requestCode == GET_GALLERY_IMAGE6){
+                Log.d(TAG, "onActivityResult, GET_GALLERY_IMAGE6");
+                Bitmap bm = null;
+                imageUri[5] = data.getData();
+                Log.d(TAG, Build.VERSION.SDK_INT + "");
+                imagePath[5] = getRealPathFromURI(imageUri[5]);
+                try {
+                    bm = getResizedBitmap(decodeUri(data.getData()), getResources().getDimensionPixelSize(R.dimen.idcard_pic_height), getResources().getDimensionPixelSize(R.dimen.idcard_pic_width));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                f[5] = new File(imagePath[5]);
+                img6.setImageBitmap(bm);
+                //onSelectFromGalleryResult(data, GET_GALLERY_IMAGE6);
+            }
 
-            try {
-                String[] proj = {MediaStore.Images.Media.DATA};
-                assert photoUri != null;
-                cursor = getContentResolver().query(photoUri, proj, null, null, null);
-                assert cursor != null;
-                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-                cursor.moveToFirst();
-                tempFile = new File(cursor.getString(column_index));
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
-            }
-            setImage(requestCode);
-            img2.setImageURI(photoUri);
-        }
-        else if (requestCode == GET_GALLERY_IMAGE3 && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            Uri photoUri = data.getData();
-            Cursor cursor = null;
-
-            try {
-                String[] proj = {MediaStore.Images.Media.DATA};
-                assert photoUri != null;
-                cursor = getContentResolver().query(photoUri, proj, null, null, null);
-                assert cursor != null;
-                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-                cursor.moveToFirst();
-                tempFile = new File(cursor.getString(column_index));
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
-            }
-            setImage(requestCode);
-            img3.setImageURI(photoUri);
-        }
-        else if (requestCode == GET_GALLERY_IMAGE4 && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            Uri photoUri = data.getData();
-            Cursor cursor = null;
-
-            try {
-                String[] proj = {MediaStore.Images.Media.DATA};
-                assert photoUri != null;
-                cursor = getContentResolver().query(photoUri, proj, null, null, null);
-                assert cursor != null;
-                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-                cursor.moveToFirst();
-                tempFile = new File(cursor.getString(column_index));
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
-            }
-            setImage(requestCode);
-            img4.setImageURI(photoUri);
-        }
-        else if (requestCode == GET_GALLERY_IMAGE5 && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            Uri photoUri = data.getData();
-            Cursor cursor = null;
-
-            try {
-                String[] proj = {MediaStore.Images.Media.DATA};
-                assert photoUri != null;
-                cursor = getContentResolver().query(photoUri, proj, null, null, null);
-                assert cursor != null;
-                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-                cursor.moveToFirst();
-                tempFile = new File(cursor.getString(column_index));
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
-            }
-            setImage(requestCode);
-            img5.setImageURI(photoUri);
-        }
-        else if (requestCode == GET_GALLERY_IMAGE6 && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            Uri photoUri = data.getData();
-            Cursor cursor = null;
-
-            try {
-                String[] proj = {MediaStore.Images.Media.DATA};
-                assert photoUri != null;
-                cursor = getContentResolver().query(photoUri, proj, null, null, null);
-                assert cursor != null;
-                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-                cursor.moveToFirst();
-                tempFile = new File(cursor.getString(column_index));
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
-            }
-            setImage(requestCode);
-            img6.setImageURI(photoUri);
-        }
-        else if (requestCode == PICK_FROM_CAMERA1) {
-            setImage(requestCode);
-        } else if (requestCode == PICK_FROM_CAMERA1) {
-            setImage(requestCode);;
-        } else if (requestCode == PICK_FROM_CAMERA1) {
-            setImage(requestCode);
-        } else if (requestCode == PICK_FROM_CAMERA1) {
-            setImage(requestCode);
-        } else if (requestCode == PICK_FROM_CAMERA1) {
-            setImage(requestCode);
-        } else if (requestCode == PICK_FROM_CAMERA1) {
-            setImage(requestCode);
         }
     }
-}
-/*
-    public void doTakePhotoAction(){
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        String url = "tmp"+String.valueOf(System.currentTimeMillis())+".jpg";
-        mlmageCaptureUri = Uri.fromFile(new File(Environment.getExternalStorageDirectory(), url));
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, mlmageCaptureUri);
-        startActivityForResult(intent, PICK_FROM_CAMERA);
+    private String getRealPathFromURI(Uri contentURI) {
+        Cursor cursor;
+        String result ="";
+        String[] proj = {MediaStore.Images.Media.DATA};
+        cursor = getContentResolver().query(contentURI, proj, null, null, null);
+        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        cursor.moveToFirst();
+        result = cursor.getString(column_index);
+        // f[0] =new File (cursor.getString(column_index));
+        return result;
     }
-
-    public void doTakeAlbumAction(){
-        Intent intent = new Intent(Intent.ACTION_PICK);
-        intent.setType(android.provider.MediaStore.Images.Media.CONTENT_TYPE);
-        startActivityForResult(intent, PICK_FROM_ALBUM);
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data){
-        super.onActivityResult(requestCode,resultCode,data);
-
-        if(resultCode!=RESULT_OK){
-            return;
+    public static Bitmap getResizedBitmap(Bitmap image, int newHeight, int newWidth) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+        float scaleWidth = ((float) newWidth) / width;
+        float scaleHeight = ((float) newHeight) / height;
+// create a matrix for the manipulation
+        Matrix matrix = new Matrix();
+        matrix.postScale(scaleWidth, scaleHeight);
+        if (Build.VERSION.SDK_INT <= 19) {
+//matrix.postRotate(90);
         }
+// recreate the new Bitmap
+        Bitmap resizedBitmap = Bitmap.createBitmap(image, 0, 0, width, height,
+                matrix, false);
+        return resizedBitmap;
+    }
 
-        switch (requestCode){
-            case PICK_FROM_CAMERA: {
-                mlmageCaptureUri = data.getData();
-                Log.d("SmartWheel", mlmageCaptureUri.getPath().toString());
-            }
-            case PICK_FROM_ALBUM:{
-                Intent intent = new Intent("com.android.camera.action.CROP");
-                intent.setDataAndType(mlmageCaptureUri, "image/*");
-                intent.putExtra("outputX", 200);
-                intent.putExtra("outputY", 200);
-                intent.putExtra("aspectX", 1);
-                intent.putExtra("aspectY", 1);
-                intent.putExtra("scale", true);
-                intent.putExtra("return-data", true);
-                startActivityForResult(intent, CROP_FROM_IMAGE);
+    private Bitmap decodeUri(Uri selectedImage) throws FileNotFoundException {
+        BitmapFactory.Options o = new BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+        BitmapFactory.decodeStream(
+                this.getContentResolver().openInputStream(selectedImage), null, o);
+
+        final int REQUIRED_SIZE = 100;
+
+        int width_tmp = o.outWidth, height_tmp = o.outHeight;
+        int scale = 1;
+        while (true) {
+            if (width_tmp / 2 < REQUIRED_SIZE || height_tmp / 2 < REQUIRED_SIZE) {
                 break;
             }
-            case CROP_FROM_IMAGE:{
-                if(resultCode!=RESULT_OK){
-                    return;
-                }
-
-                final Bundle extras = data.getExtras();
-
-                String filepath = Environment.getExternalStorageDirectory().getAbsolutePath()+"/SmartWheel/"+System.currentTimeMillis()+".jpg";
-
-                if(extras!=null){
-                    Bitmap photo = extras.getParcelable("data");
-                    img1.setImageBitmap(photo);
-                    storeCropImage(photo, filepath);
-                    absolutePath = filepath;
-                    break;
-                }
-
-                File f = new File(mlmageCaptureUri.getPath());
-                if(f.exists()){
-                    f.delete();
-                }
-            }
+            width_tmp /= 2;
+            height_tmp /= 2;
+            scale *= 2;
         }
+
+        BitmapFactory.Options o2 = new BitmapFactory.Options();
+        o2.inSampleSize = scale;
+        return BitmapFactory.decodeStream(
+                this.getContentResolver().openInputStream(selectedImage), null, o2);
     }
 
-    @Override
-    public void onClick(View v){
-        if(v.getId() == R.id.img1){
-            DialogInterface.OnClickListener cameraListener = new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    doTakePhotoAction();
-                }
-            };
-            DialogInterface.OnClickListener albumListener = new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    doTakeAlbumAction();
-                }
-            };
-            DialogInterface.OnClickListener cancelListener = new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                }
-            };
+    public File SaveImage(Bitmap finalBitmap) {
+        String root = Environment.getExternalStorageDirectory().toString();
+        File myDir = new File(root + "/MobileCard");
 
-            new AlertDialog.Builder(this)
-                    .setTitle("업로드 할 이미지 선택")
-                    .setPositiveButton("사진촬영", cameraListener)
-                    .setNeutralButton("앨범선택", albumListener)
-                    .setNegativeButton("취소", cancelListener)
-                    .show();
+        if (!myDir.exists()) {
+            Log.d("SaveImage", "non exists : " + myDir);
+            myDir.mkdirs();
         }
-    }
 
-    public void storeCropImage(Bitmap bitmap, String filepath){
+        long now = System.currentTimeMillis();
+        String fname = now + ".jpg";
+        File file = new File(myDir, fname);
 
+        if (file.exists()) {
+            Log.d("SaveImage", "file exists");
+            file.delete();
+        } else {
+            Log.d("SaveImage", "file non exists");
+        }
+
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            finalBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+            Log.d("SaveImage", "file save");
+            out.flush();
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return file;
     }
-    */
+}
